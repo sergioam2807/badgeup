@@ -3,7 +3,6 @@ import Typography from '@mui/material/Typography'
 import Modal from '@mui/material/Modal'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Avatar, Button, Grid, TextField } from '@mui/material'
-import { createManagementClient } from '@kontent-ai/management-sdk'
 import { type ChangeEvent, useState } from 'react'
 
 const style = {
@@ -23,11 +22,6 @@ interface ModalSuggestionsProps {
   handleClose: () => void
 }
 
-const clientMangement = createManagementClient({
-  environmentId: import.meta.env.VITE_APP_KONTENT_PROJECT_ID,
-  apiKey: import.meta.env.VITE_APP_KONTENT_API_KEY
-})
-
 export default function ModalSuggestions({
   open,
   handleClose
@@ -46,60 +40,7 @@ export default function ModalSuggestions({
   // }
 
   const sendData = () => {
-    clientMangement
-      .addContentItem()
-      .withData({
-        name: `Suggestion from ${user?.name}`,
-        type: {
-          codename: 'suggestions'
-        }
-      })
-      .toPromise()
-      .then(async (response) => {
-        await clientMangement
-          .upsertLanguageVariant()
-          .byItemId(response.data.id)
-          .byLanguageCodename('default')
-          .withData((builder) => {
-            return {
-              elements: [
-                builder.textElement({
-                  element: {
-                    codename: 'user_name'
-                  },
-                  value: `${user?.name}`
-                }),
-                builder.textElement({
-                  element: {
-                    codename: 'suggestion_description'
-                  },
-                  value: suggestion
-                })
-              ]
-            }
-          })
-          .toPromise()
-          .then(async (response) => {
-            const itemId = response?.data?.item?.id
-
-            if (typeof itemId === 'string') {
-              return await clientMangement
-                .publishLanguageVariant()
-                .byItemId(itemId)
-                .byLanguageCodename('default')
-                .withoutData()
-                .toPromise()
-            } else {
-              throw new Error('Item ID is undefined')
-            }
-          })
-      })
-      .then((response) => {
-        console.log('Workflow changed:', response)
-      })
-      .catch((error) => {
-        console.error(error)
-      })
+    console.log(suggestion)
     handleClose()
   }
 

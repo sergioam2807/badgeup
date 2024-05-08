@@ -1,27 +1,86 @@
-import { useState, useEffect } from 'react'
-import { deliveryClient } from '../client/client'
-import { type IContentItemElements } from '@kontent-ai/delivery-sdk'
+import { useEffect } from 'react'
 import { Grid, Typography } from '@mui/material'
-import ProgramsCard from '../components/ProgramsCard'
-// import { useAuth0 } from '@auth0/auth0-react'
+import ProgramsCard, { type Levels } from '../components/ProgramsCard'
+import { useProgramStore } from '../store/programStore'
+import { type Course } from './Courses'
+
+export interface Level {
+  id: number
+  attributes: {
+    title: string
+    description: string
+    createdAt: string
+    updatedAt: string
+    publishedAt: string
+    courses: {
+      data: Course[]
+    }
+  }
+}
+
+interface ProgramAttributes {
+  program_title: string
+  program_description: string
+  levels: {
+    data: Level[]
+  }
+}
+
+export interface Program {
+  id: number
+  attributes: ProgramAttributes
+}
 
 const Programs = () => {
-  const [programs, setPrograms] = useState<IContentItemElements[] | null>(null)
-  // const { user } = useAuth0()
+  const { setPrograms, programs } = useProgramStore()
 
   useEffect(() => {
-    deliveryClient
-      .items()
-      .type('programs')
-      .depthParameter(2)
-      .toPromise()
-      .then((response) => {
-        setPrograms(response.data.items.map((item) => item.elements))
-      })
-      .catch((error) => {
-        console.error(error)
-      })
+    const fetchContent = async () => {
+      try {
+        const response = await fetch(
+          `${
+            import.meta.env.VITE_APP_BASE_URL
+          }/programs?populate=levels.courses.course_image`
+        )
+        const data = await response.json()
+        const updatedPrograms = data.data.map((program: Program) => {
+          const updatedLevels = program.attributes.levels.data.map(
+            (level: Level) => {
+              const updatedCourses = level.attributes.courses.data.map(
+                (course: Course) => ({
+                  ...course,
+                  course_image:
+                    course.attributes.course_image.data.attributes.url
+                })
+              )
+              return {
+                ...level,
+                attributes: {
+                  ...level.attributes,
+                  courses: { data: updatedCourses }
+                }
+              }
+            }
+          )
+          return {
+            ...program,
+            attributes: {
+              ...program.attributes,
+              levels: { data: updatedLevels }
+            }
+          }
+        })
+        setPrograms(updatedPrograms)
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    }
+    fetchContent().catch((error) => {
+      console.error('Error in useEffect:', error)
+    })
   }, [])
+
+  console.log('programs', programs)
 
   return (
     <Grid>
@@ -42,12 +101,12 @@ const Programs = () => {
         flexDirection={'row'}
         justifyContent={'space-around'}
       >
-        {programs?.map((program, index) => (
-          <Grid key={index}>
+        {programs?.map((program) => (
+          <Grid key={program.id}>
             <ProgramsCard
-              title={program?.program_title?.value}
-              description={program?.program_description?.value}
-              levels={program?.levels?.value}
+              title={program?.attributes?.program_title}
+              description={program?.attributes?.program_description}
+              levels={program?.attributes?.levels as Levels}
             />
           </Grid>
         ))}

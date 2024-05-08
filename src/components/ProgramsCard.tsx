@@ -2,12 +2,27 @@ import { Button, Grid, Typography } from '@mui/material'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+export interface LevelData {
+  id: number
+  attributes: {
+    title: string
+    description: string
+    createdAt: string
+    updatedAt: string
+    publishedAt: string
+  }
+}
+
+export interface Levels {
+  data: LevelData[]
+}
+
 interface ProgramsCardProps {
   title: string
   created?: string
   date?: string
   description: string
-  levels?: string[]
+  levels?: Levels
 }
 
 const ProgramsCard = ({
@@ -22,6 +37,7 @@ const ProgramsCard = ({
   levels
 }: ProgramsCardProps) => {
   const [isHovered, setIsHovered] = useState(false)
+
   return (
     <Grid
       display={'flex'}
@@ -53,9 +69,9 @@ const ProgramsCard = ({
         </Grid>
       </Grid>
       {isHovered &&
-      levels !== null &&
-      levels !== undefined &&
-      levels.length > 0 ? (
+      levels?.data !== null &&
+      levels?.data !== undefined &&
+      levels?.data?.length > 0 ? (
         <Grid>
           <Grid display={'flex'} justifyContent={'center'}>
             <Typography
@@ -67,8 +83,11 @@ const ProgramsCard = ({
             </Typography>
           </Grid>
           <Grid display={'flex'} justifyContent={'center'} gap={2} mt={2}>
-            {levels?.map((level, index) => (
-              <Link to={`/courses/${level}`} key={index}>
+            {levels?.data?.map((level, index) => (
+              <Link
+                to={`/${title.toLowerCase()}/courses/${level?.attributes?.title.toLowerCase()}`}
+                key={index}
+              >
                 <Button
                   key={index}
                   variant='contained'
@@ -82,7 +101,7 @@ const ProgramsCard = ({
                     }
                   }}
                 >
-                  {level}
+                  {level.attributes.title}
                 </Button>
               </Link>
             ))}

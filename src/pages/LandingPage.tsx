@@ -8,43 +8,57 @@ import {
   Button,
   LinearProgress
 } from '@mui/material'
-import { deliveryClient } from '../client/client'
 import { useAuth0 } from '@auth0/auth0-react'
 import relax from '../assets/study2.svg'
-import { type IContentItem } from '@kontent-ai/delivery-sdk'
 import { useNavigate } from 'react-router-dom'
-import KontentSmartLink from '@kontent-ai/smart-link'
+
+interface Attributes {
+  title: string
+  subtitle: string
+  description: string
+  icon_typography: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+}
+
+interface DataItem {
+  id: number
+  attributes: Attributes
+}
+
+interface ApiResponse {
+  data: DataItem[]
+  meta: {
+    pagination: {
+      page: number
+      pageSize: number
+      pageCount: number
+      total: number
+    }
+  }
+}
 
 const LandingPage = () => {
-  const [content, setContent] = useState<IContentItem | null>(null)
+  const [content, setContent] = useState<ApiResponse | null>(null)
   const navigate = useNavigate()
   const { loginWithRedirect, isAuthenticated, user, isLoading } = useAuth0()
 
   useEffect(() => {
-    deliveryClient
-      .items()
-      .type('landingpage')
-      .toPromise()
-      .then((response) => {
-        setContent(response?.data?.items[0])
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-  }, [])
-
-  useEffect(() => {
-    const kontentSmartLink = KontentSmartLink.initialize({
-      defaultDataAttributes: {
-        projectId: import.meta.env.VITE_APP_KONTENT_PROJECT_ID,
-        languageCodename: 'default'
-      },
-      queryParam: 'preview'
-    })
-
-    return () => {
-      kontentSmartLink.destroy()
+    const fetchContent = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_APP_BASE_URL}/landing-pages`
+        )
+        const data = await response.json()
+        setContent(data)
+      } catch (error) {
+        console.error('Error:', error)
+      }
     }
+    fetchContent().catch((error) => {
+      console.error('Error in useEffect:', error)
+    })
   }, [])
 
   useEffect(() => {
@@ -95,7 +109,6 @@ const LandingPage = () => {
             p={4}
             borderRadius={'20px'}
             mt={7}
-            data-kontent-item-id={content?.system?.id}
           >
             <Typography
               variant='h1'
@@ -103,9 +116,8 @@ const LandingPage = () => {
               color={'#301038'}
               fontWeight={900}
               textAlign={'center'}
-              data-kontent-element-codename='title'
             >
-              {content?.elements?.title?.value}🚀
+              {content?.data[0]?.attributes?.title}
             </Typography>
           </Grid>
         </Grid>
@@ -142,7 +154,7 @@ const LandingPage = () => {
               fontWeight={900}
               fontSize={'20px'}
             >
-              {content?.elements?.sub_title?.value}
+              {content?.data[0]?.attributes?.subtitle}
             </Typography>
             <Typography
               variant='body2'
@@ -150,7 +162,7 @@ const LandingPage = () => {
               fontWeight={700}
               fontSize={'18px'}
             >
-              {content?.elements?.description?.value}
+              {content?.data[0]?.attributes?.description}
             </Typography>
           </Grid>
         </Grid>
@@ -169,7 +181,7 @@ const LandingPage = () => {
               textAlign={'center'}
               fontWeight={900}
             >
-              {content?.elements?.title_icon?.value}!
+              {content?.data[0]?.attributes?.icon_typography}
             </Typography>
           </Grid>
           <Paper elevation={24} square={false} sx={{ borderRadius: '20px' }}>

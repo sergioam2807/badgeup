@@ -24,7 +24,10 @@ function App() {
         <Routes>
           <Route path='/' element={<LandingPage />} />
           <Route path='/programs' element={<ProtectedPrograms />} />
-          <Route path='/courses/:level' element={<ProtectedCourses />} />
+          <Route
+            path='/:program/courses/:level'
+            element={<ProtectedCourses />}
+          />
           <Route path='*' element={<Navigate to='/' />} />
         </Routes>
       </Grid>
